@@ -1,0 +1,212 @@
+1. Check Partitions :
+
+	lsblk
+
+2. Delete the partition in which Arch is to be installed :
+
+	gdisk /dev/sda	#(Can be sdb, sdc, etc)
+
+Then enter options :
+
+	x
+	z
+	y
+	y
+
+3. Preparing the partitions :
+
+	cgdisk /dev/sda
+	
+	a) Boot Partition :	
+		First Option : Blank Always
+		Size : 1024MiB
+		Hex Code : EF00
+		Name : boot
+
+	b) Swap Partition :
+		Size : 8GiB	#(It's enough but can be incresed if needed)
+		Hex Code : 8200
+		Name : swap
+	
+	c) Root Partition :
+		Size : Blank	#(Rest of the space in the drive)
+		Hex Code : Blank	
+		Name : root
+
+	Then select 'write' and then 'quit'.
+
+4. Making filesystems :
+
+	a) mkfs.fat -F32 /dev/sda1
+	
+	b) mkswap /dev/sda2
+
+	c) mkfs.ext4 /dev/sda3
+		
+5. Mounting the partitions :
+
+	a) mount /dev/sda3 /mnt
+	
+	b) mkdir /mnt/boot
+
+	c) mount /dev/sda1 /mnt/boot
+
+6. Selecting the best mirrors for pacman :
+
+	a) Backup the mirrorlist :
+
+		cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+
+	b) Edit the mirrorlist :
+
+		b.1] nano /etc/pacman.d/mirrorlist
+		
+		b.2] Uncomment any 'Server' statement by removing the # . E.g. #Server = ftp://ftp.hosteurope.de/mirror/ftp.archlinux.org/core/os/$arch to Server =
+
+		b.3] Press Ctrl+O then Ctrl+X 
+
+	c) Sync the repository :
+
+		pacman -Syyu
+	
+	d) Install pacman-contrib package :
+
+		pacman -S pacman-contrib
+
+	e) Sort the mirrorlist for best mirrors :
+
+		rankmirrors -n 5 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
+
+7. Installing the base system :
+
+	pacstrap -i /mnt base base-devel
+
+8. Generating fstab :
+
+	genfstab -U -p /mnt >> /mnt/etc/fstab
+
+9. Chroot :
+	
+	arch-chroot /mnt
+
+10. Setting Locale :
+
+	a) nano /etc/locale.gen
+	
+	b) Press Ctrl+W and search for en_US.UTF-8. Do it again, remove # and exit nano
+	
+	c) locale-gen
+
+	d) echo LANG=en_US.UTF-8 > /etc/locale.conf
+
+	e) export LANG=en_US.UTF-8
+
+11. Set Time, Region and Hostname :
+
+	a) ln -s /usr/share/aoneinfo/Asia/Kolkata > /etc/localtime	#(This is for me but the region can be changed after searching for it a bit)
+
+	b) hwclock --systohc --utc
+
+	c) echo anmol > /etc/hostname	#(Replace anmol with whatever hostname is desired)
+
+	d) sudo systemctl enable fstrim.timer
+
+12. Enable some extra repositories :
+
+	a) sudo nano /etc/pacman.conf
+
+	b) uncomment out the ones you like (For example : multilib, etc)
+
+13. Set Root password :
+
+	a) passwd
+
+	b) enter the root password
+
+14. Add user :
+
+	useradd -m -g users -G wheel,storage,power -s /bin/bash anmol	#(Replace anmol with desired username)
+
+15. Setting user password :
+
+	passwd anmol
+
+16. Setting sudo :
+
+	a) EDITOR=nano visudo
+
+	b) Press Ctrl+W, search for wheel, uncomment and add at the end Defaults rootpw
+
+17. Install bash completion :
+
+	sudo pacman -S bash-completion
+
+18. Mount EFI :
+
+	mount -t efivarfs efivarfs /sys/firmware/efi/efivars
+
+18. Install Bootloader :
+
+	a) bootctl install
+	
+	b) sudo nano /boot/loader/entries/arch.conf
+
+	c) Add : 
+
+		title Arch Linux
+		linux vmlinuz-linux
+		initrd /initramfs-linux.img
+		initrd /intel-ucode.img
+
+	d) Press Ctrl+O and then Ctrl+X
+
+	e) echo "options root=PARTUUID=$(blkid -s PARTUUID -o value /dev/sda3) rw" >> /boot/loader/entries/arch.conf
+
+	f) sudo pacman -S intel-ucode
+
+19. Set up Network Manager :
+
+	a) sudo pacman -S networkmanager
+
+	b) sudo systemctl enable NetworkManager.service
+
+20. Exit and reboot :
+
+	a) exit
+
+	b) umount -R /mnt
+
+	c) sudo reboot
+
+21. After rebooting Enter username and password and then install the basic necessities :
+
+	sudo pacman -S dkms linux-headers xf86-input-libinput xorg-xinput mesa xorg-server xorg-apps xorg-xinit xorg-twm xorg-xclock xfce4-terminal plasma sddm ccache ntfs-3g
+
+	#(Here plasma and sddm can be replaced with gnome and gdm for GNOME desktop environment)
+
+22. Enabling the display manager :
+
+	sudo systemctl enable sddm.service 
+
+23. Now the installation is complete so sudo reboot
+
+24. Enabling ccache :
+
+	a) nano /etc/makepkg.conf
+
+	b) Search for !ccache and remove the '!'
+
+	c) Search for MAKEFLAGS, remove '#' and change -j2 to -j5 -l4	#(For a dual core Processor)
+
+	d) sudo nano ~/.bashrc
+
+	e) Add :
+
+		export PATH="/usr/lib/ccache/bin/:$PATH"
+		export MAKEFLAGS="-j5 -l4"
+
+25. All Set to go install desired apps and themes along with yay.
+
+
+		
+
