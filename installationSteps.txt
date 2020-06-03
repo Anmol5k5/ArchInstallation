@@ -24,7 +24,7 @@ Then enter options :
 		Name : boot
 
 	b) Swap Partition :
-		Size : 8GiB	#(It's enough but can be incresed if needed)
+		Size : 8GiB	#(It's enough but can be increased if needed)
 		Hex Code : 8200
 		Name : swap
 	
@@ -67,7 +67,7 @@ Then enter options :
 
 	c) Sync the repository :
 
-		pacman -Syyu
+		pacman -Su
 	
 	d) Install pacman-contrib package :
 
@@ -79,7 +79,7 @@ Then enter options :
 
 7. Installing the base system :
 
-	pacstrap -i /mnt base base-devel
+	pacstrap -i /mnt base linux linux-firmware sudo nano
 
 8. Generating fstab :
 
@@ -87,7 +87,7 @@ Then enter options :
 
 9. Chroot :
 	
-	arch-chroot /mnt
+	arch-chroot /mnt /bin/bash
 
 10. Setting Locale :
 
@@ -107,13 +107,13 @@ Then enter options :
 
 	b) hwclock --systohc --utc
 
-	c) echo anmol > /etc/hostname	#(Replace anmol with whatever hostname is desired)
+	c) echo host_name > /etc/hostname	#(Replace host_name with whatever hostname is desired)
 
 	d) sudo systemctl enable fstrim.timer
 
-12. Enable some extra repositories :
+12. Enable some extra repositories (If you want to.) :
 
-	a) sudo nano /etc/pacman.conf
+	a) nano /etc/pacman.conf
 
 	b) uncomment out the ones you like (For example : multilib, etc)
 
@@ -125,50 +125,45 @@ Then enter options :
 
 14. Add user :
 
-	useradd -m -g users -G wheel,storage,power -s /bin/bash anmol	#(Replace anmol with desired username)
+	useradd -m -g users -G wheel,storage,power -s /bin/bash user_name	#(Replace user_name with desired username)
 
 15. Setting user password :
 
-	passwd anmol
+	passwd user_name
 
 16. Setting sudo :
 
 	a) EDITOR=nano visudo
 
-	b) Press Ctrl+W, search for wheel, uncomment and add at the end Defaults rootpw
+	b) Press Ctrl+W, search for wheel, uncomment and add at the end: Defaults rootpw
 
 17. Install bash completion :
 
-	sudo pacman -S bash-completion
+	pacman -S bash-completion
 
 18. Mount EFI :
 
 	mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
-18. Install Bootloader :
+18. Install Bootloader (Grub) :
 
-	a) bootctl install
+	a) pacman -S grub efibootmgr intel-ucode
 	
-	b) sudo nano /boot/loader/entries/arch.conf
+	b) mkdir /boot/efi
 
-	c) Add : 
+	c) mount /dev/sda1 /boot/efi
 
-		title Arch Linux
-		linux vmlinuz-linux
-		initrd /initramfs-linux.img
-		initrd /intel-ucode.img
+	d) lsblk (To check if it mounted correctly.)
 
-	d) Press Ctrl+O and then Ctrl+X
+	e) grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --removable
 
-	e) echo "options root=PARTUUID=$(blkid -s PARTUUID -o value /dev/sda3) rw" >> /boot/loader/entries/arch.conf
-
-	f) sudo pacman -S intel-ucode
+	f) grub-mkconfig -o /boot/grub/grub.cfg
 
 19. Set up Network Manager :
 
-	a) sudo pacman -S networkmanager
+	a) pacman -S networkmanager
 
-	b) sudo systemctl enable NetworkManager.service
+	b) systemctl enable NetworkManager.service
 
 20. Exit and reboot :
 
@@ -176,7 +171,7 @@ Then enter options :
 
 	b) umount -R /mnt
 
-	c) sudo reboot
+	c) reboot
 
 21. After rebooting Enter username and password and then install the basic necessities :
 
@@ -205,7 +200,7 @@ Then enter options :
 		export PATH="/usr/lib/ccache/bin/:$PATH"
 		export MAKEFLAGS="-j5 -l4"
 
-25. All Set to go install desired apps and themes along with yay.
+25. All set to go install desired apps and themes along with yay.
 
 
 		
