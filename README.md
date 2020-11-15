@@ -115,10 +115,6 @@ Then enter options:
 
 	pacman -S bash-completion
 
-## Mount EFI:
-
-	mount -t efivarfs efivarfs /sys/firmware/efi/efivars
-
 ## Install Bootloader (Grub):
 
 	1. pacman -S grub efibootmgr intel-ucode
@@ -135,19 +131,19 @@ Then enter options:
 
 ###	Optional: Dual Boot with Windows 10
 
-		1. pacman -S os-prober
+	1. pacman -S os-prober
 
-		2. fdisk -l /dev (To check in which partition Windows boot EFI file is located. It should be located in a partition of size ~260MB called Windows EFI boot or EFI system or something)
+	2. fdisk -l /dev (To check in which partition Windows boot EFI file is located. It should be located in a partition of size ~260MB called Windows EFI boot or EFI system or something)
 
-		In my case the partition turned out to be /dev/nvme0n1p2 but it may be different for everyone.
+	In my case the partition turned out to be /dev/nvme0n1p2 but it may be different for everyone.
 
-		3. mount /dev/nvme0n1p2 /mnt
+	3. mount /dev/nvme0n1p2 /mnt
 
-		4. os-prober
+	4. os-prober
 
-		5. Backup existing grub config: cp /boot/grub/grub.cfg /boot/grub/grub.cfg-origin
+	5. Backup existing grub config: cp /boot/grub/grub.cfg /boot/grub/grub.cfg-origin
 
-		6. grub-mkconfig -o /boot/grub/grub.cfg
+	6. grub-mkconfig -o /boot/grub/grub.cfg
 
 ## Set up Network Manager:
 
