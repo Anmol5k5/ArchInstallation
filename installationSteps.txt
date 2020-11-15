@@ -1,41 +1,41 @@
-1. Check Partitions :
+1. Check Partitions:
 
 	lsblk
 
-2. Delete the partition in which Arch is to be installed :
+2. Delete the partition in which Arch is to be installed: (If not clean installing then skip this)
 
 	gdisk /dev/sda	#(Can be sdb, sdc, etc)
 
-Then enter options :
+Then enter options:
 
 	x
 	z
 	y
 	y
 
-3. Preparing the partitions :
+3. Preparing the partitions:
 
 	cgdisk /dev/sda
 	
-	a) Boot Partition :	
-		First Option : Blank Always
-		Size : 1024MiB
-		Hex Code : EF00
-		Name : boot
+	a) Boot Partition:	
+		First Option: Blank Always
+		Size: 1024MiB
+		Hex Code: EF00
+		Name: boot
 
-	b) Swap Partition :
-		Size : 8GiB	#(It's enough but can be increased if needed)
-		Hex Code : 8200
-		Name : swap
+	b) Swap Partition:
+		Size: 8GiB	#(It's enough but can be increased if needed)
+		Hex Code: 8200
+		Name: swap
 	
-	c) Root Partition :
-		Size : Blank	#(Rest of the space in the drive)
-		Hex Code : Blank	
-		Name : root
+	c) Root Partition:
+		Size: Blank	#(Rest of the space in the drive)
+		Hex Code: Blank	
+		Name: root
 
 	Then select 'write' and then 'quit'.
 
-4. Making filesystems :
+4. Making filesystems:
 
 	a) mkfs.fat -F32 /dev/sda1
 	
@@ -43,7 +43,7 @@ Then enter options :
 
 	c) mkfs.ext4 /dev/sda3
 		
-5. Mounting the partitions :
+5. Mounting the partitions:
 
 	a) mount /dev/sda3 /mnt
 	
@@ -51,45 +51,19 @@ Then enter options :
 
 	c) mount /dev/sda1 /mnt/boot
 
-6. Selecting the best mirrors for pacman :
-
-	a) Backup the mirrorlist :
-
-		cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-
-	b) Edit the mirrorlist :
-
-		b.1] nano /etc/pacman.d/mirrorlist
-		
-		b.2] Uncomment any 'Server' statement by removing the # . E.g. #Server = ftp://ftp.hosteurope.de/mirror/ftp.archlinux.org/core/os/$arch to Server =
-
-		b.3] Press Ctrl+O then Ctrl+X 
-
-	c) Sync the repository :
-
-		pacman -Su
-	
-	d) Install pacman-contrib package :
-
-		pacman -S pacman-contrib
-
-	e) Sort the mirrorlist for best mirrors :
-
-		rankmirrors -n 5 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
-
-7. Installing the base system :
+6. Installing the base system:
 
 	pacstrap -i /mnt base linux linux-firmware sudo nano
 
-8. Generating fstab :
+7. Generating fstab:
 
 	genfstab -U -p /mnt >> /mnt/etc/fstab
 
-9. Chroot :
+8. Chroot:
 	
 	arch-chroot /mnt /bin/bash
 
-10. Setting Locale :
+9. Setting Locale:
 
 	a) nano /etc/locale.gen
 	
@@ -101,9 +75,9 @@ Then enter options :
 
 	e) export LANG=en_US.UTF-8
 
-11. Set Time, Region and Hostname :
+10. Set Time, Region and Hostname:
 
-	a) ln -s /usr/share/aoneinfo/Asia/Kolkata > /etc/localtime	#(This is for me but the region can be changed after searching for it a bit)
+	a) ln -s /usr/share/zoneinfo/Asia/Kolkata > /etc/localtime	#(This is for me but the region can be changed after searching for it a bit)
 
 	b) hwclock --systohc --utc
 
@@ -111,41 +85,41 @@ Then enter options :
 
 	d) sudo systemctl enable fstrim.timer
 
-12. Enable some extra repositories (If you want to.) :
+11. Enable some extra repositories (If you want to.):
 
 	a) nano /etc/pacman.conf
 
-	b) uncomment out the ones you like (For example : multilib, etc)
+	b) uncomment out the ones you like (For example: multilib, etc)
 
-13. Set Root password :
+12. Set Root password:
 
 	a) passwd
 
 	b) enter the root password
 
-14. Add user :
+13. Add user:
 
 	useradd -m -g users -G wheel,storage,power -s /bin/bash user_name	#(Replace user_name with desired username)
 
-15. Setting user password :
+14. Setting user password:
 
 	passwd user_name
 
-16. Setting sudo :
+15. Setting sudo:
 
 	a) EDITOR=nano visudo
 
 	b) Press Ctrl+W, search for wheel, uncomment and add at the end: Defaults rootpw
 
-17. Install bash completion :
+16. Install bash completion:
 
 	pacman -S bash-completion
 
-18. Mount EFI :
+17. Mount EFI:
 
 	mount -t efivarfs efivarfs /sys/firmware/efi/efivars
 
-18. Install Bootloader (Grub) :
+18. Install Bootloader (Grub):
 
 	a) pacman -S grub efibootmgr intel-ucode
 	
@@ -155,17 +129,45 @@ Then enter options :
 
 	d) lsblk (To check if it mounted correctly.)
 
-	e) grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --removable
+	e) grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi --recheck
 
 	f) grub-mkconfig -o /boot/grub/grub.cfg
 
-19. Set up Network Manager :
+	Optional: Dual Boot with Windows 10
+
+	g) pacman -S os-prober
+
+	h) fdisk -l /dev (To check in which partition Windows boot EFI file is located. It should be located in a partition of size ~260MB called Windows EFI boot or EFI system or something)
+
+	In my case the partition turned out to be /dev/nvme0n1p2 but it may be different for everyone.
+
+	i) mount /dev/nvme0n1p2 /mnt
+
+	j) os-prober
+
+	k) Backup existing grub config: cp /boot/grub/grub.cfg /boot/grub/grub.cfg-origin
+
+	l) grub-mkconfig -o /boot/grub/grub.cfg
+
+19. Set up Network Manager:
 
 	a) pacman -S networkmanager
 
 	b) systemctl enable NetworkManager.service
 
-20. Exit and reboot :
+20. Optional: Install Graphic Card drivers:
+
+	First do an lspci to check for the Graphic cards attached.
+
+	For Intel:
+
+		a) pacman -S xf86-video-intel libgl mesa
+	
+	For NVIDIA:
+
+		a) pacman -S nvidia nvidia-lts nvidia-libgl mesa
+
+21. Exit and reboot:
 
 	a) exit
 
@@ -173,34 +175,19 @@ Then enter options :
 
 	c) reboot
 
-21. After rebooting Enter username and password and then install the basic necessities :
+22. After rebooting Enter username and password and then install the basic necessities:
 
 	sudo pacman -S dkms linux-headers xf86-input-libinput xorg-xinput mesa xorg-server xorg-apps xorg-xinit xorg-twm xorg-xclock xfce4-terminal plasma sddm ccache ntfs-3g
 
 	#(Here plasma and sddm can be replaced with gnome and gdm for GNOME desktop environment)
 
-22. Enabling the display manager :
+23. Enabling the display manager:
 
 	sudo systemctl enable sddm.service 
 
-23. Now the installation is complete so sudo reboot
+24. Now the installation is complete so sudo reboot
 
-24. Enabling ccache :
-
-	a) nano /etc/makepkg.conf
-
-	b) Search for !ccache and remove the '!'
-
-	c) Search for MAKEFLAGS, remove '#' and change -j2 to -j5 -l4	#(For a dual core Processor)
-
-	d) sudo nano ~/.bashrc
-
-	e) Add :
-
-		export PATH="/usr/lib/ccache/bin/:$PATH"
-		export MAKEFLAGS="-j5 -l4"
-
-25. All set to go install desired apps and themes along with yay.
+25. All set to go. Install desired apps and themes along with yay.
 
 
 		
